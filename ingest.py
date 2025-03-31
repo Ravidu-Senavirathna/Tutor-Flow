@@ -25,3 +25,20 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return text
 
 
+def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
+    """
+    Split text into overlapping chunks by word count.
+    Each chunk is chunk_size words, stepping forward by (chunk_size - overlap).
+    """
+    words = text.split()
+    step  = chunk_size - overlap
+    chunks = []
+
+    for start in range(0, len(words), step):
+        end   = start + chunk_size
+        chunk = " ".join(words[start:end])
+        chunks.append(chunk)
+        if end >= len(words):
+            break
+
+    return chunks
