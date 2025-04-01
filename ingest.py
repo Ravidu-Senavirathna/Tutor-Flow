@@ -42,3 +42,68 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
             break
 
     return chunks
+
+
+def ingest():
+    # 1. Load embedding model
+    print("Loading embedding model...")
+    model = SentenceTransformer(EMBED_MODEL)
+
+    # 2. Connect to ChromaDB (creates chroma_store/ if it doesn't exist)
+    client     = chromadb.PersistentClient(path=CHROMA_PATH)
+
+    # Delete existing collection so re-running ingest starts clean
+    try:
+        client.delete_collection(COLLECTION)
+        print("Cleared existing collection.")
+    except Exception:
+        pass
+
+    collection = client.create_collection(COLLECTION)
+
+    # 3. Process each PDF
+    pdf_files = [f for f in os.listdir(PDF_FOLDER) if f.endswith(".pdf")]
+
+    if not pdf_files:
+        print(f"No PDFs found in '{PDF_FOLDER}/' — add your chapter PDFs and re-run.")
+        return
+
+    total_chunks = 0
+
+    for pdf_file in sorted(pdf_files):
+        pdf_path = os.path.join(PDF_FOLDER, pdf_file)
+        print(f"\nProcessing: {pdf_file}")
+
+        # Extract text
+        text = extract_text_from_pdf(pdf_path)
+        if not text.strip():
+            print(f"  Warning: no text extracted from {pdf_file} — skipping.")
+            continue
+
+        # Chunk it
+        chunks = chunk_text(text, CHUNK_SIZE, CHUNK_OVERLAP)
+        print(f"  {len(chunks)} chunks created from {len(text.split())} words")
+
+        # Embed all chunks for this PDF in one batch (faster)
+        embeddings = model.encode(chunks, show_progress_bar=True).tolist()
+
+        # Build unique IDs and metadata for each chunk
+        ids        = [f"{pdf_file}__chunk_{i}" for i in range(len(chunks))]
+        metadatas  = [{"source": pdf_file, "chunk_index": i} for i in range(len(chunks))]
+
+        # Store in ChromaDB
+        collection.add(
+            ids        = ids,
+            documents  = chunks,
+            embeddings = embeddings,
+            metadatas  = metadatas,
+        )
+
+        total_chunks += len(chunks)
+
+    print(f"\nDone! {total_chunks} total chunks stored in ChromaDB.")
+    print(f"Vector store saved to '{CHROMA_PATH}/'")
+
+
+if __name__ == "__main__":
+    ingest()
