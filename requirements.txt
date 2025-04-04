@@ -1,3 +1,8 @@
+openai
 pypdf
 chromadb
 sentence-transformers
+python-dotenv
+black
+pytest
+ipykernel
