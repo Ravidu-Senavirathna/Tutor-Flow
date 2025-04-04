@@ -3,13 +3,15 @@ import pypdf
 import chromadb
 from sentence_transformers import SentenceTransformer
 
+
 # ── Config ────────────────────────────────────────────────
-PDF_FOLDER   = "pdfs"
-CHROMA_PATH  = "chroma_store"
+BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
+PDF_FOLDER   = os.path.join(BASE_DIR, "pdfs")
+CHROMA_PATH  = os.path.join(BASE_DIR, "chroma_store")
 COLLECTION   = "bio_chapters"
 EMBED_MODEL  = "all-MiniLM-L6-v2"
-CHUNK_SIZE   = 400   # words per chunk
-CHUNK_OVERLAP = 80   # words of overlap between chunks
+CHUNK_SIZE   = 400
+CHUNK_OVERLAP = 80
 # ─────────────────────────────────────────────────────────
 
 
