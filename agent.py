@@ -34,7 +34,7 @@ payload = {
 response = requests.post(INVOKE_URL, headers=headers, json=payload, stream=stream)
 response.raise_for_status()
 
-response =  response.json()
+answer =  response.json()["choices"][0]["message"]["reasoning"].strip()
 
 if stream:
     for line in response.iter_lines():
@@ -42,4 +42,4 @@ if stream:
             print(line.decode("utf-8"))
 else:
     print(f'Question: {question}\n')
-    print(f'Answer: \n{response}')
+    print(f'Answer: \n{answer}')
