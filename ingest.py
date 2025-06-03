@@ -8,15 +8,16 @@ from sentence_transformers import SentenceTransformer
 BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 PDF_FOLDER   = os.path.join(BASE_DIR, "pdfs")
 CHROMA_PATH  = os.path.join(BASE_DIR, "chroma_store")
-COLLECTION   = "bio_chapters"
+COLLECTION   = "chapters"
 EMBED_MODEL  = "all-MiniLM-L6-v2"
-CHUNK_SIZE   = 400
-CHUNK_OVERLAP = 80
+CHUNK_SIZE   = 1000
+CHUNK_OVERLAP = 300
 # ─────────────────────────────────────────────────────────
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Read all pages of a PDF and return as one string."""
+
     text = ""
     with open(pdf_path, "rb") as f:
         reader = pypdf.PdfReader(f)
@@ -32,6 +33,7 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
     Split text into overlapping chunks by word count.
     Each chunk is chunk_size words, stepping forward by (chunk_size - overlap).
     """
+    
     words = text.split()
     step  = chunk_size - overlap
     chunks = []
@@ -52,7 +54,7 @@ def ingest():
     model = SentenceTransformer(EMBED_MODEL)
 
     # 2. Connect to ChromaDB (creates chroma_store/ if it doesn't exist)
-    client     = chromadb.PersistentClient(path=CHROMA_PATH)
+    client = chromadb.PersistentClient(path=CHROMA_PATH)
 
     # Delete existing collection so re-running ingest starts clean
     try:
@@ -61,7 +63,10 @@ def ingest():
     except Exception:
         pass
 
-    collection = client.create_collection(COLLECTION)
+    collection = client.create_collection(
+        name=COLLECTION,
+        metadata={"hnsw:space": "cosine"}
+    )
 
     # 3. Process each PDF
     pdf_files = [f for f in os.listdir(PDF_FOLDER) if f.endswith(".pdf")]
