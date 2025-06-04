@@ -11,6 +11,15 @@ TOP_K       = 5  # number of chunks to retrieve per query
 # ─────────────────────────────────────────────────────────
 
 
+def load_retriever():
+    """Load the embedding model and ChromaDB collection."""
+
+    model      = SentenceTransformer(EMBED_MODEL)
+    client     = chromadb.PersistentClient(path=CHROMA_PATH)
+    collection = client.get_collection(COLLECTION)
+    return model, collection
+
 
 
 if __name__ == "__main__":
+    model, collection = load_retriever()
