@@ -19,14 +19,6 @@ headers = {
     "Accept": "text/event-stream" if stream else "application/json"
 }
 
-question = "what is reinforcement learning"
-role = "a tutor"
-
-model , collection = load_retriever()
-
-data = retrieve(question, model, collection, top_k=2)
-good_data = [c for c in data if c["score"] > 0.5]
-
 
 """Build a prompt with retrieved context + question."""
 def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
@@ -46,27 +38,42 @@ def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
 
     return prompt
 
-prompt = build_prompt(role, question, good_data)
 
-payload = {
-  "model": NIM_MODEL,
-  "messages": [{"role":"user","content":prompt}],
-  "max_tokens": MAX_TOKENS,
-  "temperature": TEMPERATURE,
-  "top_p": 0.95,
-  "stream": stream,
-  "chat_template_kwargs": {"enable_thinking":True},
-}
+def ask_question():
+    
+    question = "what is reinforcement learning"
+    role = "a tutor"
 
-response = requests.post(INVOKE_URL, headers=headers, json=payload, stream=stream)
-response.raise_for_status()
+    model , collection = load_retriever()
 
-answer =  response.json()["choices"][0]["message"]["reasoning"].strip()
+    data = retrieve(question, model, collection, top_k=2)
+    good_data = [c for c in data if c["score"] > 0.5]
 
-if stream:
-    for line in response.iter_lines():
-        if line:
-            print(line.decode("utf-8"))
-else:
-    print(f'Question: {question}\n')
-    print(f'Answer: \n{answer}')
+    prompt = build_prompt(role, question, good_data)
+
+    payload = {
+    "model": NIM_MODEL,
+    "messages": [{"role":"user","content":prompt}],
+    "max_tokens": MAX_TOKENS,
+    "temperature": TEMPERATURE,
+    "top_p": 0.95,
+    "stream": stream,
+    "chat_template_kwargs": {"enable_thinking":True},
+    }
+
+    response = requests.post(INVOKE_URL, headers=headers, json=payload, stream=stream)
+    response.raise_for_status()
+
+    answer =  response.json()["choices"][0]["message"]["reasoning"].strip()
+
+    if stream:
+        for line in response.iter_lines():
+            if line:
+                print(line.decode("utf-8"))
+    else:
+        print(f'Question: {question}\n')
+        print(f'Answer: \n{answer}')
+
+
+if __name__ == "__main__":
+    ask_question()
