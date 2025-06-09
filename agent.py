@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+from retriever import load_retriever, retrieve
 
 load_dotenv()
 
@@ -10,9 +11,8 @@ INVOKE_URL     = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_MODEL      = "google/diffusiongemma-26b-a4b-it"
 MAX_TOKENS = 500
 TEMPERATURE = 0.3
-# ─────────────────────────────────────────────────────────
-
 stream = False
+# ─────────────────────────────────────────────────────────
 
 headers = {
     "Authorization": f"Bearer {NVIDIA_API_KEY}",
@@ -21,9 +21,16 @@ headers = {
 
 question = "what is q learning in reinforcement learning"
 
+model , collection = load_retriever()
+
+data = retrieve(question, model, collection, top_k=5)
+good_data = [c for c in data if c["score"] > 0.5]
+
+#prompt =  good_data, question
+
 payload = {
   "model": NIM_MODEL,
-  "messages": [{"role":"user","content":question}],
+  "messages": [{"role":"user","content":prompt}],
   "max_tokens": MAX_TOKENS,
   "temperature": TEMPERATURE,
   "top_p": 0.95,
