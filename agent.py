@@ -9,7 +9,7 @@ load_dotenv()
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
 INVOKE_URL     = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_MODEL      = "google/diffusiongemma-26b-a4b-it"
-MAX_TOKENS = 500
+MAX_TOKENS = 1000
 TEMPERATURE = 0.3
 stream = False
 # ─────────────────────────────────────────────────────────
@@ -23,10 +23,20 @@ question = "what is q learning in reinforcement learning"
 
 model , collection = load_retriever()
 
-data = retrieve(question, model, collection, top_k=5)
+data = retrieve(question, model, collection, top_k=3)
 good_data = [c for c in data if c["score"] > 0.5]
 
-#prompt =  good_data, question
+context = "\n\n".join([
+        f"[Source: {c['source']}]\n{c['text']}"
+        for c in good_data
+    ])
+
+prompt = f"""
+If the answer is not in the context, say "I don't have enough information on that topic."
+CONTEXT:{context}
+QUESTION:{question}
+ANSWER:
+"""
 
 payload = {
   "model": NIM_MODEL,
