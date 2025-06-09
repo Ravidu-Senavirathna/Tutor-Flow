@@ -19,17 +19,18 @@ headers = {
     "Accept": "text/event-stream" if stream else "application/json"
 }
 
-question = "what is q learning in reinforcement learning"
+question = "what is reinforcement learning"
+role = "a tutor"
 
 model , collection = load_retriever()
 
-data = retrieve(question, model, collection, top_k=3)
+data = retrieve(question, model, collection, top_k=2)
 good_data = [c for c in data if c["score"] > 0.5]
 
 
 """Build a prompt with retrieved context + question."""
 def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
-    
+
     parts = []
     for chunk in chunks:
         parts.append(f"[Source: {chunk['source']}]\n{chunk['text']}")
@@ -44,6 +45,8 @@ def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
         """
 
     return prompt
+
+prompt = build_prompt(role, question, good_data)
 
 payload = {
   "model": NIM_MODEL,
