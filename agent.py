@@ -39,13 +39,9 @@ def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
     return prompt
 
 
-def ask_question():
-    
-    question = "what is reinforcement learning"
-    role = "a tutor"
+def ask_question(role: str, question: str):
 
     model , collection = load_retriever()
-
     data = retrieve(question, model, collection, top_k=2)
     good_data = [c for c in data if c["score"] > 0.5]
 
@@ -64,16 +60,11 @@ def ask_question():
     response = requests.post(INVOKE_URL, headers=headers, json=payload, stream=stream)
     response.raise_for_status()
 
-    answer =  response.json()["choices"][0]["message"]["reasoning"].strip()
-
-    if stream:
-        for line in response.iter_lines():
-            if line:
-                print(line.decode("utf-8"))
-    else:
-        print(f'Question: {question}\n')
-        print(f'Answer: \n{answer}')
+    return response.json()["choices"][0]["message"]["reasoning"].strip()
 
 
 if __name__ == "__main__":
-    ask_question()
+    role = "A teacher"
+    question = "what is model based in reinforcement learning"
+    answer = ask_question(role, question)
+    print(answer)
