@@ -21,7 +21,7 @@ headers = {
 
 
 """Build a prompt with retrieved context + question."""
-def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
+def build_prompt(role: str, constraints: str, question: str, chunks: list[dict]) -> str:
 
     parts = []
     for chunk in chunks:
@@ -31,6 +31,7 @@ def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
 
     prompt = f"""
         ROLE:{role}
+        CONSTRAINTS:{constraints}
         CONTEXT:{context}
         QUESTION:{question}
         ANSWER:
@@ -40,12 +41,13 @@ def build_prompt(role: str, question: str, chunks: list[dict]) -> str:
 
 
 def ask_question(role: str, question: str):
-
+    constraints = ""
+    
     model , collection = load_retriever()
     data = retrieve(question, model, collection, top_k=2)
     good_data = [c for c in data if c["score"] > 0.5]
 
-    prompt = build_prompt(role, question, good_data)
+    prompt = build_prompt(role, question, constraints, good_data)
 
     payload = {
     "model": NIM_MODEL,
